@@ -1,5 +1,3 @@
-// events/interactionCreate.js
-
 const {
     Events,
     ChannelType,
@@ -7,30 +5,30 @@ const {
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    AttachmentBuilder
 } = require("discord.js");
+
+const discordTranscripts = require("discord-html-transcripts");
+
+const STAFF_ROLE_ID = "1509213176632180816";
+const TICKET_LOG_CHANNEL_ID = "1509317934860861555";
 
 module.exports = {
     name: Events.InteractionCreate,
 
     async execute(interaction, client) {
-
         if (!interaction.isButton()) return;
 
-        // TICKET OLUŞTUR
         if (interaction.customId === "create_ticket") {
-
             const guild = interaction.guild;
             const user = interaction.user;
 
-            // TICKET STAFF ROLE ID
-            const staffRoleId = "1509213176632180816";
-
-            const staffRole = guild.roles.cache.get(staffRoleId);
+            const staffRole = guild.roles.cache.get(STAFF_ROLE_ID);
 
             if (!staffRole) {
                 return interaction.reply({
-                    content: "❌ Ticket Staff rolü bulunamadı.",
+                    content: "❌ Ticket yetkili rolü bulunamadı.",
                     ephemeral: true
                 });
             }
@@ -55,14 +53,10 @@ module.exports = {
                 type: ChannelType.GuildText,
 
                 permissionOverwrites: [
-
-                    // everyone göremez
                     {
                         id: guild.id,
                         deny: [PermissionFlagsBits.ViewChannel]
                     },
-
-                    // ticket sahibi görebilir
                     {
                         id: user.id,
                         allow: [
@@ -71,10 +65,8 @@ module.exports = {
                             PermissionFlagsBits.ReadMessageHistory
                         ]
                     },
-
-                    // ticket staff görebilir
                     {
-                        id: staffRole.id,
+                        id: STAFF_ROLE_ID,
                         allow: [
                             PermissionFlagsBits.ViewChannel,
                             PermissionFlagsBits.SendMessages,
@@ -82,8 +74,6 @@ module.exports = {
                             PermissionFlagsBits.ManageMessages
                         ]
                     },
-
-                    // bot görebilir
                     {
                         id: client.user.id,
                         allow: [
@@ -102,9 +92,7 @@ module.exports = {
                 .setDescription(
                     `${user}, hoş geldin.\n\nSorununu detaylı bir şekilde açıklarsan yetkililer en kısa sürede yardımcı olacaktır.`
                 )
-                .setFooter({
-                    text: "Adonis Ticket Sistemi"
-                });
+                .setFooter({ text: "Adonis Ticket Sistemi" });
 
             const closeRow = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
@@ -115,7 +103,7 @@ module.exports = {
             );
 
             await ticketChannel.send({
-                content: `📩 ${user} ticket oluşturdu.\n<@&${staffRoleId}>`,
+                content: `📩 ${user} ticket oluşturdu.\n<@&${STAFF_ROLE_ID}>`,
                 embeds: [ticketEmbed],
                 components: [closeRow]
             });
@@ -126,9 +114,7 @@ module.exports = {
             });
         }
 
-        // TICKET KAPAT
         if (interaction.customId === "close_ticket") {
-
             if (!interaction.channel.name.startsWith("ticket-")) {
                 return interaction.reply({
                     content: "❌ Bu kanal bir ticket kanalı değil.",
@@ -136,13 +122,45 @@ module.exports = {
                 });
             }
 
-            await interaction.reply(
-                "🔒 Ticket 5 saniye içinde kapatılacak..."
-            );
+            await interaction.reply("🔒 Transcript hazırlanıyor, ticket kapatılıyor...");
+
+            const transcript = await discordTranscripts.createTranscript(interaction.channel, {
+                limit: -1,
+                returnType: "attachment",
+                filename: `${interaction.channel.name}-transcript.html`,
+                saveImages: true,
+                poweredBy: false
+            });
+
+            const logChannel = interaction.guild.channels.cache.get(TICKET_LOG_CHANNEL_ID);
+
+            if (logChannel) {
+                const logEmbed = new EmbedBuilder()
+                    .setColor("#2b1d0e")
+                    .setTitle("📁 Ticket Transcript")
+                    .addFields(
+                        {
+                            name: "Kanal",
+                            value: `${interaction.channel.name}`,
+                            inline: true
+                        },
+                        {
+                            name: "Kapatan",
+                            value: `${interaction.user}`,
+                            inline: true
+                        }
+                    )
+                    .setTimestamp();
+
+                await logChannel.send({
+                    embeds: [logEmbed],
+                    files: [transcript]
+                });
+            }
 
             setTimeout(() => {
                 interaction.channel.delete().catch(() => {});
-            }, 5000);
+            }, 3000);
         }
     }
 };
