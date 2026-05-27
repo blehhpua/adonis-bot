@@ -34,7 +34,7 @@ module.exports = {
                 "Bu kanal yetkililer tarafından kilitlendi."
             )
             .setFooter({
-                text: "Adonis Moderasyon Sistemi"
+                text: "A R C A N A Moderasyon Sistemi"
             })
             .setTimestamp();
 

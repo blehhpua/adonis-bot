@@ -34,7 +34,7 @@ module.exports = {
                 "Bu kanal tekrar kullanıma açıldı."
             )
             .setFooter({
-                text: "Adonis Moderasyon Sistemi"
+                text: "A R C A N A Moderasyon Sistemi"
             })
             .setTimestamp();
 

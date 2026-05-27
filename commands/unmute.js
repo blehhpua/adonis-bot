@@ -35,7 +35,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor("#2b1d0e")
-            .setTitle("✦ Adonis Unmute Sistemi ✦")
+            .setTitle("✦ A R C A N A Unmute Sistemi ✦")
             .setThumbnail(
                 member.user.displayAvatarURL({
                     dynamic: true
@@ -54,7 +54,7 @@ module.exports = {
                 }
             )
             .setFooter({
-                text: "Adonis Moderasyon Sistemi"
+                text: "A R C A N A Moderasyon Sistemi"
             })
             .setTimestamp();
 

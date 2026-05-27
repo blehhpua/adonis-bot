@@ -71,7 +71,7 @@ module.exports = {
                 }
             )
             .setFooter({
-                text: "Adonis Moderasyon Sistemi"
+                text: "A R C A N A Moderasyon Sistemi"
             })
             .setTimestamp();
 

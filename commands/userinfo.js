@@ -19,7 +19,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor("#2b1d0e")
-            .setTitle("✦ Adonis User Info ✦")
+            .setTitle("✦ A R C A N A User Info ✦")
             .setThumbnail(
                 member.user.displayAvatarURL({
                     dynamic: true,
@@ -63,7 +63,7 @@ module.exports = {
                 }
             )
             .setFooter({
-                text: "Adonis Moderasyon Sistemi"
+                text: "A R C A N A Moderasyon Sistemi"
             })
             .setTimestamp();
 

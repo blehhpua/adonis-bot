@@ -92,7 +92,7 @@ module.exports = {
                 .setDescription(
                     `${user}, hoş geldin.\n\nSorununu detaylı bir şekilde açıklarsan yetkililer en kısa sürede yardımcı olacaktır.`
                 )
-                .setFooter({ text: "Adonis Ticket Sistemi" });
+                .setFooter({ text: "A R C A N A Ticket Sistemi" });
 
             const closeRow = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()

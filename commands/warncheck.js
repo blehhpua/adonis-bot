@@ -40,7 +40,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor("#2b1d0e")
-            .setTitle("✦ Adonis Warn Kontrol ✦")
+            .setTitle("✦ A R C A N A Warn Kontrol ✦")
             .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
             .addFields(
                 {
@@ -59,7 +59,7 @@ module.exports = {
                 }
             )
             .setFooter({
-                text: "Adonis Moderasyon Sistemi"
+                text: "A R C A N A Moderasyon Sistemi"
             })
             .setTimestamp();
 

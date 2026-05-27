@@ -55,7 +55,7 @@ module.exports = {
             .setTitle("✦ Warn Silindi ✦")
             .setDescription(`${member} kullanıcısından 1 warn kaldırıldı.`)
             .setFooter({
-                text: "Adonis Moderasyon Sistemi"
+                text: "A R C A N A Moderasyon Sistemi"
             })
             .setTimestamp();
 

@@ -56,7 +56,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor("#2b1d0e")
-            .setTitle("✦ Adonis Kayıt Sistemi ✦")
+            .setTitle("✦ A R C A N A Kayıt Sistemi ✦")
             .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
             .addFields(
                 { name: "👤 Kullanıcı", value: `${member.user.tag}`, inline: true },
@@ -65,7 +65,7 @@ module.exports = {
                 { name: "⚧ Cinsiyet", value: genderText, inline: true },
                 { name: "🛡 Yetkili", value: `${message.author.tag}`, inline: true }
             )
-            .setFooter({ text: "Adonis Kayıt Sistemi" })
+            .setFooter({ text: "A R C A N A Kayıt Sistemi" })
             .setTimestamp();
 
         const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID);

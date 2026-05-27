@@ -42,14 +42,14 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor("#2b1d0e")
-            .setTitle("✦ Adonis Jail Sistemi ✦")
+            .setTitle("✦ A R C A N A Jail Sistemi ✦")
             .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
             .addFields(
                 { name: "👤 Kullanıcı", value: `${member.user.tag}`, inline: true },
                 { name: "🛡 Yetkili", value: `${message.author.tag}`, inline: true },
                 { name: "📄 Sebep", value: reason, inline: false }
             )
-            .setFooter({ text: "Adonis Moderasyon Sistemi" })
+            .setFooter({ text: "A R C A N A Moderasyon Sistemi" })
             .setTimestamp();
 
         const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID);

@@ -115,7 +115,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor("#2b1d0e")
-            .setTitle("✦ Adonis'e Hoş Geldin ✦")
+            .setTitle("✦ A R C A N A'ya Hoş Geldin ✦")
             .setThumbnail(
                 member.user.displayAvatarURL({
                     dynamic: true,
@@ -154,7 +154,7 @@ module.exports = {
                 }
             )
             .setFooter({
-                text: "Adonis Welcome System"
+                text: "A R C A N A Welcome System"
             })
             .setTimestamp();
 

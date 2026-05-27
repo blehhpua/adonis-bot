@@ -25,7 +25,7 @@ module.exports = {
                 "Destek almak için aşağıdaki butona basarak bir ticket oluşturabilirsin."
             )
             .setFooter({
-                text: "Adonis Ticket Sistemi"
+                text: "A R C A N A Ticket Sistemi"
             });
 
         const row = new ActionRowBuilder().addComponents(
