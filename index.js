@@ -57,7 +57,7 @@ client.once("ready", () => {
     client.user.setPresence({
         activities: [
             {
-                name: "Adonis Kayıt",
+                name: "A R C A N A",
                 type: 4
             }
         ],
