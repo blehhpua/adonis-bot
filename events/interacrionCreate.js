@@ -24,7 +24,7 @@ module.exports = {
             const user = interaction.user;
 
             // TICKET STAFF ROLE ID
-            const staffRoleId = "ROLE_ID_HERE";
+            const staffRoleId = "1509213176632180816";
 
             const staffRole = guild.roles.cache.get(staffRoleId);
 
