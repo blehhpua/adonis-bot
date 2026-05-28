@@ -15,8 +15,14 @@ const discordTranscripts = require("discord-html-transcripts");
 const STAFF_ROLE_ID = "1509213176632180816";
 const TICKET_LOG_CHANNEL_ID = "1509317934860861555";
 
+const dataPath =
+    path.join(__dirname, "../data");
+
 const ticketsPath =
     path.join(__dirname, "../data/tickets.json");
+
+const vcPath =
+    path.join(__dirname, "../data/tempVcs.json");
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -24,17 +30,93 @@ module.exports = {
     async execute(interaction, client) {
         if (!interaction.isButton()) return;
 
-        if (!fs.existsSync(path.join(__dirname, "../data"))) {
-            fs.mkdirSync(path.join(__dirname, "../data"));
+        if (!fs.existsSync(dataPath)) {
+            fs.mkdirSync(dataPath);
         }
 
         if (!fs.existsSync(ticketsPath)) {
-            fs.writeFileSync(
-                ticketsPath,
-                JSON.stringify({}, null, 4)
-            );
+            fs.writeFileSync(ticketsPath, JSON.stringify({}, null, 4));
         }
 
+        if (!fs.existsSync(vcPath)) {
+            fs.writeFileSync(vcPath, JSON.stringify({}, null, 4));
+        }
+
+        // VC PANEL BUTTONS
+        if (
+            interaction.customId === "vc_lock" ||
+            interaction.customId === "vc_unlock" ||
+            interaction.customId === "vc_hide" ||
+            interaction.customId === "vc_show"
+        ) {
+            const vcData = JSON.parse(
+                fs.readFileSync(vcPath, "utf8")
+            );
+
+            const vc = vcData[interaction.channel.id];
+
+            if (!vc) {
+                return interaction.reply({
+                    content: "❌ Bu kanal kişisel bir ses kanalı değil.",
+                    ephemeral: true
+                });
+            }
+
+            if (vc.owner !== interaction.user.id) {
+                return interaction.reply({
+                    content: "❌ Bu ses kanalının sahibi sen değilsin.",
+                    ephemeral: true
+                });
+            }
+
+            if (interaction.customId === "vc_lock") {
+                await interaction.channel.permissionOverwrites.edit(
+                    interaction.guild.id,
+                    { Connect: false }
+                );
+
+                vc.locked = true;
+            }
+
+            if (interaction.customId === "vc_unlock") {
+                await interaction.channel.permissionOverwrites.edit(
+                    interaction.guild.id,
+                    { Connect: true }
+                );
+
+                vc.locked = false;
+            }
+
+            if (interaction.customId === "vc_hide") {
+                await interaction.channel.permissionOverwrites.edit(
+                    interaction.guild.id,
+                    { ViewChannel: false }
+                );
+
+                vc.hidden = true;
+            }
+
+            if (interaction.customId === "vc_show") {
+                await interaction.channel.permissionOverwrites.edit(
+                    interaction.guild.id,
+                    { ViewChannel: true }
+                );
+
+                vc.hidden = false;
+            }
+
+            fs.writeFileSync(
+                vcPath,
+                JSON.stringify(vcData, null, 4)
+            );
+
+            return interaction.reply({
+                content: "✅ Ses kanalı ayarı güncellendi.",
+                ephemeral: true
+            });
+        }
+
+        // CREATE TICKET
         if (interaction.customId === "create_ticket") {
             const guild = interaction.guild;
             const user = interaction.user;
@@ -155,6 +237,7 @@ module.exports = {
             });
         }
 
+        // CLAIM TICKET
         if (interaction.customId === "claim_ticket") {
             const tickets = JSON.parse(
                 fs.readFileSync(ticketsPath, "utf8")
@@ -205,6 +288,7 @@ module.exports = {
             });
         }
 
+        // CLOSE TICKET
         if (interaction.customId === "close_ticket") {
             const tickets = JSON.parse(
                 fs.readFileSync(ticketsPath, "utf8")

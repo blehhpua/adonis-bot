@@ -1,7 +1,11 @@
 const {
     Events,
     ChannelType,
-    PermissionFlagsBits
+    PermissionFlagsBits,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle
 } = require("discord.js");
 
 const fs = require("fs");
@@ -17,8 +21,11 @@ module.exports = {
 
     async execute(oldState, newState, client) {
 
-        if (!fs.existsSync(path.join(__dirname, "../data"))) {
-            fs.mkdirSync(path.join(__dirname, "../data"));
+        const dataPath =
+            path.join(__dirname, "../data");
+
+        if (!fs.existsSync(dataPath)) {
+            fs.mkdirSync(dataPath);
         }
 
         if (!fs.existsSync(vcPath)) {
@@ -32,7 +39,6 @@ module.exports = {
             fs.readFileSync(vcPath, "utf8")
         );
 
-        // user joined create-vc
         if (
             newState.channelId === CREATE_VC_ID &&
             oldState.channelId !== CREATE_VC_ID
@@ -71,7 +77,8 @@ module.exports = {
                                 PermissionFlagsBits.ViewChannel,
                                 PermissionFlagsBits.Connect,
                                 PermissionFlagsBits.ManageChannels,
-                                PermissionFlagsBits.MoveMembers
+                                PermissionFlagsBits.MoveMembers,
+                                PermissionFlagsBits.SendMessages
                             ]
                         }
                     ]
@@ -79,7 +86,9 @@ module.exports = {
 
             vcData[personalVc.id] = {
                 owner: member.id,
-                createdAt: Date.now()
+                createdAt: Date.now(),
+                locked: false,
+                hidden: false
             };
 
             fs.writeFileSync(
@@ -89,9 +98,49 @@ module.exports = {
 
             await member.voice.setChannel(personalVc)
                 .catch(() => {});
+
+            const panelEmbed = new EmbedBuilder()
+                .setColor("#2b1d0e")
+                .setTitle("🎛 Kontrol Paneli")
+                .setDescription(
+                    "Bu ses kanalı sana ait.\n\nAşağıdaki butonlarla kanalını yönetebilirsin."
+                )
+                .setFooter({
+                    text: "A R C A N A Kişisel VC Sistemi"
+                });
+
+            const panelRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId("vc_lock")
+                    .setLabel("Kilitle")
+                    .setEmoji("🔒")
+                    .setStyle(ButtonStyle.Secondary),
+
+                new ButtonBuilder()
+                    .setCustomId("vc_unlock")
+                    .setLabel("Aç")
+                    .setEmoji("🔓")
+                    .setStyle(ButtonStyle.Secondary),
+
+                new ButtonBuilder()
+                    .setCustomId("vc_hide")
+                    .setLabel("Gizle")
+                    .setEmoji("👁️")
+                    .setStyle(ButtonStyle.Secondary),
+
+                new ButtonBuilder()
+                    .setCustomId("vc_show")
+                    .setLabel("Göster")
+                    .setEmoji("🌙")
+                    .setStyle(ButtonStyle.Secondary)
+            );
+
+            await personalVc.send({
+                embeds: [panelEmbed],
+                components: [panelRow]
+            }).catch(() => {});
         }
 
-        // auto delete empty personal vc
         if (
             oldState.channelId &&
             vcData[oldState.channelId]
