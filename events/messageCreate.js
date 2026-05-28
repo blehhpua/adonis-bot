@@ -25,10 +25,9 @@ module.exports = {
 
         // remove AFK when user talks
         if (
-            afkData[message.author.id]
-            && !message.content.startsWith(`${PREFIX}afk`)
+            afkData[message.author.id] &&
+            !message.content.startsWith(`${PREFIX}afk`)
         ) {
-
             delete afkData[message.author.id];
 
             fs.writeFileSync(
@@ -36,22 +35,21 @@ module.exports = {
                 JSON.stringify(afkData, null, 4)
             );
 
-            message.reply(
+            await message.reply(
                 "🌙 AFK modundan çıktın."
             );
         }
 
         // mention AFK users
         message.mentions.users.forEach(user => {
-
             if (afkData[user.id]) {
-
                 message.reply(
                     `🌙 ${user.tag} şu anda AFK.\nSebep: **${afkData[user.id].reason}**`
                 );
             }
         });
 
+        // prefix commands
         if (!message.content.startsWith(PREFIX)) return;
 
         const args = message.content
@@ -68,15 +66,12 @@ module.exports = {
         if (!command) return;
 
         try {
-
             await command.execute(
                 message,
                 args,
                 client
             );
-
         } catch (error) {
-
             console.error(error);
 
             message.reply(
