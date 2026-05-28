@@ -5,20 +5,35 @@ const {
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle,
-    AttachmentBuilder
+    ButtonStyle
 } = require("discord.js");
 
+const fs = require("fs");
+const path = require("path");
 const discordTranscripts = require("discord-html-transcripts");
 
 const STAFF_ROLE_ID = "1509213176632180816";
 const TICKET_LOG_CHANNEL_ID = "1509317934860861555";
+
+const ticketsPath =
+    path.join(__dirname, "../data/tickets.json");
 
 module.exports = {
     name: Events.InteractionCreate,
 
     async execute(interaction, client) {
         if (!interaction.isButton()) return;
+
+        if (!fs.existsSync(path.join(__dirname, "../data"))) {
+            fs.mkdirSync(path.join(__dirname, "../data"));
+        }
+
+        if (!fs.existsSync(ticketsPath)) {
+            fs.writeFileSync(
+                ticketsPath,
+                JSON.stringify({}, null, 4)
+            );
+        }
 
         if (interaction.customId === "create_ticket") {
             const guild = interaction.guild;
@@ -33,20 +48,26 @@ module.exports = {
                 });
             }
 
-            const safeUsername = user.username
-                .toLowerCase()
-                .replace(/[^a-z0-9]/g, "-");
-
-            const existing = guild.channels.cache.find(
-                channel => channel.name === `ticket-${safeUsername}`
+            const tickets = JSON.parse(
+                fs.readFileSync(ticketsPath, "utf8")
             );
 
-            if (existing) {
+            const alreadyOpen = Object.entries(tickets).find(
+                ([channelId, ticket]) =>
+                    ticket.owner === user.id &&
+                    guild.channels.cache.has(channelId)
+            );
+
+            if (alreadyOpen) {
                 return interaction.reply({
-                    content: `❌ Zaten açık bir ticketin var: ${existing}`,
+                    content: `❌ Zaten açık bir ticketin var: <#${alreadyOpen[0]}>`,
                     ephemeral: true
                 });
             }
+
+            const safeUsername = user.username
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "-");
 
             const ticketChannel = await guild.channels.create({
                 name: `ticket-${safeUsername}`,
@@ -86,15 +107,35 @@ module.exports = {
                 ]
             });
 
+            tickets[ticketChannel.id] = {
+                owner: user.id,
+                claimedBy: null,
+                addedUsers: [],
+                createdAt: Date.now()
+            };
+
+            fs.writeFileSync(
+                ticketsPath,
+                JSON.stringify(tickets, null, 4)
+            );
+
             const ticketEmbed = new EmbedBuilder()
                 .setColor("#2b1d0e")
                 .setTitle("🎫 Ticket Oluşturuldu")
                 .setDescription(
                     `${user}, hoş geldin.\n\nSorununu detaylı bir şekilde açıklarsan yetkililer en kısa sürede yardımcı olacaktır.`
                 )
-                .setFooter({ text: "A R C A N A Ticket Sistemi" });
+                .setFooter({
+                    text: "A R C A N A Ticket Sistemi"
+                });
 
-            const closeRow = new ActionRowBuilder().addComponents(
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId("claim_ticket")
+                    .setLabel("Devral")
+                    .setEmoji("📌")
+                    .setStyle(ButtonStyle.Secondary),
+
                 new ButtonBuilder()
                     .setCustomId("close_ticket")
                     .setLabel("Ticketi Kapat")
@@ -105,7 +146,7 @@ module.exports = {
             await ticketChannel.send({
                 content: `📩 ${user} ticket oluşturdu.\n<@&${STAFF_ROLE_ID}>`,
                 embeds: [ticketEmbed],
-                components: [closeRow]
+                components: [row]
             });
 
             return interaction.reply({
@@ -114,25 +155,90 @@ module.exports = {
             });
         }
 
-        if (interaction.customId === "close_ticket") {
-            if (!interaction.channel.name.startsWith("ticket-")) {
+        if (interaction.customId === "claim_ticket") {
+            const tickets = JSON.parse(
+                fs.readFileSync(ticketsPath, "utf8")
+            );
+
+            const ticket = tickets[interaction.channel.id];
+
+            if (!ticket) {
                 return interaction.reply({
                     content: "❌ Bu kanal bir ticket kanalı değil.",
                     ephemeral: true
                 });
             }
 
-            await interaction.reply("🔒 Transcript hazırlanıyor, ticket kapatılıyor...");
+            if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+                return interaction.reply({
+                    content: "❌ Bu ticketi devralmak için yetkin yok.",
+                    ephemeral: true
+                });
+            }
 
-            const transcript = await discordTranscripts.createTranscript(interaction.channel, {
-                limit: -1,
-                returnType: "attachment",
-                filename: `${interaction.channel.name}-transcript.html`,
-                saveImages: true,
-                poweredBy: false
+            if (ticket.claimedBy) {
+                return interaction.reply({
+                    content: `❌ Bu ticket zaten <@${ticket.claimedBy}> tarafından devralınmış.`,
+                    ephemeral: true
+                });
+            }
+
+            ticket.claimedBy = interaction.user.id;
+
+            fs.writeFileSync(
+                ticketsPath,
+                JSON.stringify(tickets, null, 4)
+            );
+
+            await interaction.channel.setName(
+                `ticket-${interaction.user.username}`
+            ).catch(() => {});
+
+            const embed = new EmbedBuilder()
+                .setColor("#2b1d0e")
+                .setDescription(
+                    `☾ Ticket ${interaction.user} tarafından devralındı.`
+                );
+
+            return interaction.reply({
+                embeds: [embed]
             });
+        }
 
-            const logChannel = interaction.guild.channels.cache.get(TICKET_LOG_CHANNEL_ID);
+        if (interaction.customId === "close_ticket") {
+            const tickets = JSON.parse(
+                fs.readFileSync(ticketsPath, "utf8")
+            );
+
+            const ticket = tickets[interaction.channel.id];
+
+            if (!ticket) {
+                return interaction.reply({
+                    content: "❌ Bu kanal bir ticket kanalı değil.",
+                    ephemeral: true
+                });
+            }
+
+            await interaction.reply(
+                "🔒 Transcript hazırlanıyor, ticket kapatılıyor..."
+            );
+
+            const transcript =
+                await discordTranscripts.createTranscript(
+                    interaction.channel,
+                    {
+                        limit: -1,
+                        returnType: "attachment",
+                        filename: `${interaction.channel.name}-transcript.html`,
+                        saveImages: true,
+                        poweredBy: false
+                    }
+                );
+
+            const logChannel =
+                interaction.guild.channels.cache.get(
+                    TICKET_LOG_CHANNEL_ID
+                );
 
             if (logChannel) {
                 const logEmbed = new EmbedBuilder()
@@ -142,6 +248,18 @@ module.exports = {
                         {
                             name: "Kanal",
                             value: `${interaction.channel.name}`,
+                            inline: true
+                        },
+                        {
+                            name: "Açan",
+                            value: `<@${ticket.owner}>`,
+                            inline: true
+                        },
+                        {
+                            name: "Devralan",
+                            value: ticket.claimedBy
+                                ? `<@${ticket.claimedBy}>`
+                                : "Devralınmadı",
                             inline: true
                         },
                         {
@@ -157,6 +275,13 @@ module.exports = {
                     files: [transcript]
                 });
             }
+
+            delete tickets[interaction.channel.id];
+
+            fs.writeFileSync(
+                ticketsPath,
+                JSON.stringify(tickets, null, 4)
+            );
 
             setTimeout(() => {
                 interaction.channel.delete().catch(() => {});

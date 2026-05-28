@@ -8,7 +8,7 @@ const {
 
 module.exports = {
     name: "ticket",
-    description: "Ticket panelini oluşturur",
+    description: "Ticket oluşturur",
 
     async execute(message) {
 
