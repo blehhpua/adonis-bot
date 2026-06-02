@@ -24,8 +24,6 @@ module.exports = {
 
         const hasLink =
             content.includes("http://") ||
-            content.includes("https://") ||
-            content.includes("www.") ||
             content.includes("discord.gg/");
 
         if (hasLink) {
