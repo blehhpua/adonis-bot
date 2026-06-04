@@ -15,14 +15,34 @@ const discordTranscripts = require("discord-html-transcripts");
 const STAFF_ROLE_ID = "1509213176632180816";
 const TICKET_LOG_CHANNEL_ID = "1509317934860861555";
 
-const dataPath =
-    path.join(__dirname, "../data");
+const dataPath = path.join(__dirname, "../data");
+const ticketsPath = path.join(dataPath, "tickets.json");
+const vcPath = path.join(dataPath, "tempVcs.json");
 
-const ticketsPath =
-    path.join(__dirname, "../data/tickets.json");
+function ensureJson(filePath, defaultValue) {
+    if (!fs.existsSync(dataPath)) {
+        fs.mkdirSync(dataPath, { recursive: true });
+    }
 
-const vcPath =
-    path.join(__dirname, "../data/tempVcs.json");
+    if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 4));
+    }
+}
+
+function readJson(filePath, defaultValue) {
+    ensureJson(filePath, defaultValue);
+
+    try {
+        return JSON.parse(fs.readFileSync(filePath, "utf8"));
+    } catch {
+        fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 4));
+        return defaultValue;
+    }
+}
+
+function writeJson(filePath, data) {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 4));
+}
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -30,29 +50,15 @@ module.exports = {
     async execute(interaction, client) {
         if (!interaction.isButton()) return;
 
-        if (!fs.existsSync(dataPath)) {
-            fs.mkdirSync(dataPath);
-        }
+        const vcButtonIds = [
+            "vc_lock",
+            "vc_unlock",
+            "vc_hide",
+            "vc_show"
+        ];
 
-        if (!fs.existsSync(ticketsPath)) {
-            fs.writeFileSync(ticketsPath, JSON.stringify({}, null, 4));
-        }
-
-        if (!fs.existsSync(vcPath)) {
-            fs.writeFileSync(vcPath, JSON.stringify({}, null, 4));
-        }
-
-        // VC PANEL BUTTONS
-        if (
-            interaction.customId === "vc_lock" ||
-            interaction.customId === "vc_unlock" ||
-            interaction.customId === "vc_hide" ||
-            interaction.customId === "vc_show"
-        ) {
-            const vcData = JSON.parse(
-                fs.readFileSync(vcPath, "utf8")
-            );
-
+        if (vcButtonIds.includes(interaction.customId)) {
+            const vcData = readJson(vcPath, {});
             const vc = vcData[interaction.channel.id];
 
             if (!vc) {
@@ -69,58 +75,63 @@ module.exports = {
                 });
             }
 
+            let response = "✅ Ses kanalı ayarı güncellendi.";
+
             if (interaction.customId === "vc_lock") {
                 await interaction.channel.permissionOverwrites.edit(
                     interaction.guild.id,
-                    { Connect: false }
+                    { Connect: false },
+                    { reason: "Kişisel oda sahibi odayı kilitledi." }
                 );
 
                 vc.locked = true;
+                response = "🔒 Odan kilitlendi.";
             }
 
             if (interaction.customId === "vc_unlock") {
                 await interaction.channel.permissionOverwrites.edit(
                     interaction.guild.id,
-                    { Connect: true }
+                    { Connect: true },
+                    { reason: "Kişisel oda sahibi kilidi açtı." }
                 );
 
                 vc.locked = false;
+                response = "🔓 Odan herkese açıldı.";
             }
 
             if (interaction.customId === "vc_hide") {
                 await interaction.channel.permissionOverwrites.edit(
                     interaction.guild.id,
-                    { ViewChannel: false }
+                    { ViewChannel: false },
+                    { reason: "Kişisel oda sahibi odayı gizledi." }
                 );
 
                 vc.hidden = true;
+                response = "👁️ Odan gizlendi.";
             }
 
             if (interaction.customId === "vc_show") {
                 await interaction.channel.permissionOverwrites.edit(
                     interaction.guild.id,
-                    { ViewChannel: true }
+                    { ViewChannel: true },
+                    { reason: "Kişisel oda sahibi odayı görünür yaptı." }
                 );
 
                 vc.hidden = false;
+                response = "🌙 Odan tekrar görünür oldu.";
             }
 
-            fs.writeFileSync(
-                vcPath,
-                JSON.stringify(vcData, null, 4)
-            );
+            writeJson(vcPath, vcData);
 
             return interaction.reply({
-                content: "✅ Ses kanalı ayarı güncellendi.",
+                content: response,
                 ephemeral: true
             });
         }
 
-        // CREATE TICKET
         if (interaction.customId === "create_ticket") {
             const guild = interaction.guild;
             const user = interaction.user;
-
             const staffRole = guild.roles.cache.get(STAFF_ROLE_ID);
 
             if (!staffRole) {
@@ -130,10 +141,7 @@ module.exports = {
                 });
             }
 
-            const tickets = JSON.parse(
-                fs.readFileSync(ticketsPath, "utf8")
-            );
-
+            const tickets = readJson(ticketsPath, {});
             const alreadyOpen = Object.entries(tickets).find(
                 ([channelId, ticket]) =>
                     ticket.owner === user.id &&
@@ -154,7 +162,6 @@ module.exports = {
             const ticketChannel = await guild.channels.create({
                 name: `ticket-${safeUsername}`,
                 type: ChannelType.GuildText,
-
                 permissionOverwrites: [
                     {
                         id: guild.id,
@@ -196,10 +203,7 @@ module.exports = {
                 createdAt: Date.now()
             };
 
-            fs.writeFileSync(
-                ticketsPath,
-                JSON.stringify(tickets, null, 4)
-            );
+            writeJson(ticketsPath, tickets);
 
             const ticketEmbed = new EmbedBuilder()
                 .setColor("#2b1d0e")
@@ -237,12 +241,8 @@ module.exports = {
             });
         }
 
-        // CLAIM TICKET
         if (interaction.customId === "claim_ticket") {
-            const tickets = JSON.parse(
-                fs.readFileSync(ticketsPath, "utf8")
-            );
-
+            const tickets = readJson(ticketsPath, {});
             const ticket = tickets[interaction.channel.id];
 
             if (!ticket) {
@@ -267,11 +267,7 @@ module.exports = {
             }
 
             ticket.claimedBy = interaction.user.id;
-
-            fs.writeFileSync(
-                ticketsPath,
-                JSON.stringify(tickets, null, 4)
-            );
+            writeJson(ticketsPath, tickets);
 
             await interaction.channel.setName(
                 `ticket-${interaction.user.username}`
@@ -288,12 +284,8 @@ module.exports = {
             });
         }
 
-        // CLOSE TICKET
         if (interaction.customId === "close_ticket") {
-            const tickets = JSON.parse(
-                fs.readFileSync(ticketsPath, "utf8")
-            );
-
+            const tickets = readJson(ticketsPath, {});
             const ticket = tickets[interaction.channel.id];
 
             if (!ticket) {
@@ -361,11 +353,7 @@ module.exports = {
             }
 
             delete tickets[interaction.channel.id];
-
-            fs.writeFileSync(
-                ticketsPath,
-                JSON.stringify(tickets, null, 4)
-            );
+            writeJson(ticketsPath, tickets);
 
             setTimeout(() => {
                 interaction.channel.delete().catch(() => {});
