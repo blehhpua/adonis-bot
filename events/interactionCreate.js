@@ -5,7 +5,10 @@ const {
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle
 } = require("discord.js");
 
 const fs = require("fs");
@@ -44,35 +47,217 @@ function writeJson(filePath, data) {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 4));
 }
 
+function getPersonalVc(interaction) {
+    const vcData = readJson(vcPath, {});
+    const vc = vcData[interaction.channel.id];
+
+    return {
+        vcData,
+        vc
+    };
+}
+
+function isVcOwner(interaction, vc) {
+    return vc && vc.owner === interaction.user.id;
+}
+
+function createLimitModal() {
+    const input = new TextInputBuilder()
+        .setCustomId("vc_limit_value")
+        .setLabel("Kullanıcı limiti")
+        .setPlaceholder("0-99 arası yaz. 0 limitsiz yapar.")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+        .setMinLength(1)
+        .setMaxLength(2);
+
+    return new ModalBuilder()
+        .setCustomId("vc_user_limit_modal")
+        .setTitle("Kullanıcı Limiti")
+        .addComponents(
+            new ActionRowBuilder().addComponents(input)
+        );
+}
+
+function createTransferModal() {
+    const input = new TextInputBuilder()
+        .setCustomId("vc_transfer_user")
+        .setLabel("Yeni sahip")
+        .setPlaceholder("Kullanıcı ID veya @etiket yaz")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true);
+
+    return new ModalBuilder()
+        .setCustomId("vc_transfer_modal")
+        .setTitle("Sahiplik Devri")
+        .addComponents(
+            new ActionRowBuilder().addComponents(input)
+        );
+}
+
+async function replyNotPersonalVc(interaction) {
+    return interaction.reply({
+        content: "❌ Bu kanal kişisel bir ses kanalı değil.",
+        ephemeral: true
+    });
+}
+
+async function replyNotOwner(interaction) {
+    return interaction.reply({
+        content: "❌ Bu ses kanalının sahibi sen değilsin.",
+        ephemeral: true
+    });
+}
+
 module.exports = {
     name: Events.InteractionCreate,
 
     async execute(interaction, client) {
+        if (interaction.isModalSubmit()) {
+            if (
+                interaction.customId !== "vc_user_limit_modal" &&
+                interaction.customId !== "vc_transfer_modal"
+            ) {
+                return;
+            }
+
+            const { vcData, vc } = getPersonalVc(interaction);
+
+            if (!vc) {
+                return replyNotPersonalVc(interaction);
+            }
+
+            if (!isVcOwner(interaction, vc)) {
+                return replyNotOwner(interaction);
+            }
+
+            if (interaction.customId === "vc_user_limit_modal") {
+                const limitText = interaction.fields
+                    .getTextInputValue("vc_limit_value")
+                    .trim();
+
+                const limit = Number(limitText);
+
+                if (
+                    !Number.isInteger(limit) ||
+                    limit < 0 ||
+                    limit > 99
+                ) {
+                    return interaction.reply({
+                        content: "❌ Limit 0 ile 99 arasında bir sayı olmalı.",
+                        ephemeral: true
+                    });
+                }
+
+                await interaction.channel.setUserLimit(
+                    limit,
+                    "Kişisel oda sahibi kullanıcı limitini değiştirdi."
+                );
+
+                vc.userLimit = limit;
+                writeJson(vcPath, vcData);
+
+                return interaction.reply({
+                    content: limit === 0
+                        ? "✅ Oda limiti kaldırıldı."
+                        : `✅ Oda limiti ${limit} olarak ayarlandı.`,
+                    ephemeral: true
+                });
+            }
+
+            if (interaction.customId === "vc_transfer_modal") {
+                const targetText = interaction.fields
+                    .getTextInputValue("vc_transfer_user")
+                    .trim();
+
+                const targetId = targetText.match(/\d{17,20}/)?.[0];
+
+                if (!targetId) {
+                    return interaction.reply({
+                        content: "❌ Geçerli bir kullanıcı ID veya etiket yazmalısın.",
+                        ephemeral: true
+                    });
+                }
+
+                const targetMember =
+                    await interaction.guild.members.fetch(targetId)
+                        .catch(() => null);
+
+                if (!targetMember || targetMember.user.bot) {
+                    return interaction.reply({
+                        content: "❌ Bu kullanıcı sunucuda bulunamadı.",
+                        ephemeral: true
+                    });
+                }
+
+                if (!interaction.channel.members.has(targetMember.id)) {
+                    return interaction.reply({
+                        content: "❌ Sahipliği vereceğin kişi bu ses odasında olmalı.",
+                        ephemeral: true
+                    });
+                }
+
+                await interaction.channel.permissionOverwrites.delete(
+                    vc.owner,
+                    "Kişisel oda sahipliği devredildi."
+                ).catch(() => {});
+
+                await interaction.channel.permissionOverwrites.edit(
+                    targetMember.id,
+                    {
+                        ViewChannel: true,
+                        Connect: true,
+                        Speak: true,
+                        ManageChannels: true,
+                        MoveMembers: true
+                    },
+                    { reason: "Kişisel oda sahipliği devredildi." }
+                );
+
+                vc.owner = targetMember.id;
+                writeJson(vcPath, vcData);
+
+                await interaction.channel.setName(
+                    `🎧 ${targetMember.displayName}`
+                ).catch(() => {});
+
+                return interaction.reply({
+                    content: `👑 Oda sahipliği ${targetMember} kullanıcısına verildi.`,
+                    ephemeral: true
+                });
+            }
+
+            return;
+        }
+
         if (!interaction.isButton()) return;
 
         const vcButtonIds = [
             "vc_lock",
             "vc_unlock",
-            "vc_hide",
-            "vc_show"
+            "vc_mic_mute",
+            "vc_mic_unmute",
+            "vc_user_limit",
+            "vc_transfer"
         ];
 
         if (vcButtonIds.includes(interaction.customId)) {
-            const vcData = readJson(vcPath, {});
-            const vc = vcData[interaction.channel.id];
+            const { vcData, vc } = getPersonalVc(interaction);
 
             if (!vc) {
-                return interaction.reply({
-                    content: "❌ Bu kanal kişisel bir ses kanalı değil.",
-                    ephemeral: true
-                });
+                return replyNotPersonalVc(interaction);
             }
 
-            if (vc.owner !== interaction.user.id) {
-                return interaction.reply({
-                    content: "❌ Bu ses kanalının sahibi sen değilsin.",
-                    ephemeral: true
-                });
+            if (!isVcOwner(interaction, vc)) {
+                return replyNotOwner(interaction);
+            }
+
+            if (interaction.customId === "vc_user_limit") {
+                return interaction.showModal(createLimitModal());
+            }
+
+            if (interaction.customId === "vc_transfer") {
+                return interaction.showModal(createTransferModal());
             }
 
             let response = "✅ Ses kanalı ayarı güncellendi.";
@@ -99,26 +284,32 @@ module.exports = {
                 response = "🔓 Odan herkese açıldı.";
             }
 
-            if (interaction.customId === "vc_hide") {
+            if (interaction.customId === "vc_mic_mute") {
                 await interaction.channel.permissionOverwrites.edit(
                     interaction.guild.id,
-                    { ViewChannel: false },
-                    { reason: "Kişisel oda sahibi odayı gizledi." }
+                    { Speak: false },
+                    { reason: "Kişisel oda sahibi mikrofonları kapattı." }
                 );
 
-                vc.hidden = true;
-                response = "👁️ Odan gizlendi.";
+                await interaction.channel.permissionOverwrites.edit(
+                    vc.owner,
+                    { Speak: true },
+                    { reason: "Oda sahibi konuşabilmeye devam eder." }
+                );
+
+                vc.micMuted = true;
+                response = "🎙️ Oda mikrofonları kapatıldı.";
             }
 
-            if (interaction.customId === "vc_show") {
+            if (interaction.customId === "vc_mic_unmute") {
                 await interaction.channel.permissionOverwrites.edit(
                     interaction.guild.id,
-                    { ViewChannel: true },
-                    { reason: "Kişisel oda sahibi odayı görünür yaptı." }
+                    { Speak: true },
+                    { reason: "Kişisel oda sahibi mikrofonları açtı." }
                 );
 
-                vc.hidden = false;
-                response = "🌙 Odan tekrar görünür oldu.";
+                vc.micMuted = false;
+                response = "🔊 Oda mikrofonları açıldı.";
             }
 
             writeJson(vcPath, vcData);

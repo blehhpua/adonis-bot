@@ -108,7 +108,8 @@ module.exports = {
                 owner: member.id,
                 createdAt: Date.now(),
                 locked: false,
-                hidden: false
+                micMuted: false,
+                userLimit: personalVc.userLimit
             };
 
             writeJson(vcPath, vcData);
@@ -125,7 +126,7 @@ module.exports = {
                     text: "A R C A N A Kişisel Ses Sistemi"
                 });
 
-            const panelRow = new ActionRowBuilder().addComponents(
+            const mainPanelRow = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
                     .setCustomId("vc_lock")
                     .setLabel("Kilitle")
@@ -139,21 +140,35 @@ module.exports = {
                     .setStyle(ButtonStyle.Secondary),
 
                 new ButtonBuilder()
-                    .setCustomId("vc_hide")
-                    .setLabel("Gizle")
-                    .setEmoji("👁️")
+                    .setCustomId("vc_mic_mute")
+                    .setLabel("Mik Kapat")
+                    .setEmoji("🎙️")
                     .setStyle(ButtonStyle.Secondary),
 
                 new ButtonBuilder()
-                    .setCustomId("vc_show")
-                    .setLabel("Göster")
-                    .setEmoji("🌙")
+                    .setCustomId("vc_mic_unmute")
+                    .setLabel("Mik Aç")
+                    .setEmoji("🔊")
+                    .setStyle(ButtonStyle.Secondary)
+            );
+
+            const settingsPanelRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId("vc_user_limit")
+                    .setLabel("Limit")
+                    .setEmoji("👥")
+                    .setStyle(ButtonStyle.Secondary),
+
+                new ButtonBuilder()
+                    .setCustomId("vc_transfer")
+                    .setLabel("Sahiplik Ver")
+                    .setEmoji("👑")
                     .setStyle(ButtonStyle.Secondary)
             );
 
             await personalVc.send({
                 embeds: [panelEmbed],
-                components: [panelRow]
+                components: [mainPanelRow, settingsPanelRow]
             }).catch(() => {});
         }
 
