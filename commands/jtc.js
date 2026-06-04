@@ -35,6 +35,16 @@ function saveCreateChannel(channelId) {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
 }
 
+function getConfig() {
+    ensureConfig();
+
+    try {
+        return JSON.parse(fs.readFileSync(configPath, "utf8"));
+    } catch {
+        return {};
+    }
+}
+
 module.exports = {
     name: "jtc",
     description: "Kişisel ses odası sistemini kurar.",
@@ -43,6 +53,14 @@ module.exports = {
         if (!message.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return message.reply(
                 "❌ Bu komutu kullanmak için Kanal Yönet yetkisine sahip olmalısın."
+            );
+        }
+
+        const config = getConfig();
+
+        if (config.createChannelId) {
+            return message.reply(
+                `❌ Join to create sistemi zaten kurulmuş: <#${config.createChannelId}>`
             );
         }
 
