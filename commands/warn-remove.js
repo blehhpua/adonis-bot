@@ -14,7 +14,7 @@ const WARN_ROLES = {
 };
 
 module.exports = {
-    name: "warnremove",
+    name: "warn-remove",
 
     async execute(message) {
         if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
@@ -24,7 +24,7 @@ module.exports = {
         const member = message.mentions.members.first();
 
         if (!member) {
-            return message.reply("❌ Kullanım: `a.warnremove @üye`");
+            return message.reply("❌ Kullanım: `a.warn-remove @üye`");
         }
 
         let warnings = {};
@@ -51,11 +51,10 @@ module.exports = {
         fs.writeFileSync(warningsPath, JSON.stringify(warnings, null, 4));
 
         const embed = new EmbedBuilder()
-            .setColor("#2b1d0e")
-            .setTitle("✦ Warn Silindi ✦")
+            .setColor("#360258")
             .setDescription(`${member} kullanıcısından 1 warn kaldırıldı.`)
             .setFooter({
-                text: "A R C A N A Moderasyon Sistemi"
+                text: "A R C A N A Waen Sistemi"
             })
             .setTimestamp();
 

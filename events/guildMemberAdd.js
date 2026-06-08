@@ -9,7 +9,7 @@ const BOT_ROLE_ID = "1508897436939321414";
 const WELCOME_CHANNEL_ID = "1508888262356504789";
 
 const RAID_LOG_CHANNEL_ID = "1509318603969925260";
-const QUARANTINE_ROLE_ID = "1508889870297333820";
+const QUARANTINE_ROLE_ID = "1508905746501337109";
 
 const joins = new Map();
 
@@ -114,8 +114,8 @@ module.exports = {
         if (!channel) return;
 
         const embed = new EmbedBuilder()
-            .setColor("#2b1d0e")
-            .setTitle("✦ A R C A N A'ya Hoş Geldin ✦")
+            .setColor("#360258")
+            .setTitle("A R C A N A'ya Hoş Geldin ✦")
             .setThumbnail(
                 member.user.displayAvatarURL({
                     dynamic: true,

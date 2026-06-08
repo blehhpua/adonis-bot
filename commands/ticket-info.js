@@ -7,7 +7,7 @@ const ticketsPath =
     path.join(__dirname, "..", "data", "tickets.json");
 
 module.exports = {
-    name: "ticketinfo",
+    name: "ticket-info",
 
     async execute(message) {
 
@@ -41,7 +41,7 @@ module.exports = {
             `<t:${Math.floor(ticket.createdAt / 1000)}:R>`;
 
         const embed = new EmbedBuilder()
-            .setColor("#2b1d0e")
+            .setColor("#360258")
             .setTitle("🎫 Ticket Bilgisi")
             .addFields(
                 {

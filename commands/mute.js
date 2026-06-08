@@ -63,8 +63,7 @@ module.exports = {
         await message.delete().catch(() => {});
 
         const embed = new EmbedBuilder()
-            .setColor("#2b1d0e")
-            .setTitle("✦ A R C A N A Mute Sistemi ✦")
+            .setColor("#360258")
             .setThumbnail(
                 member.user.displayAvatarURL({
                     dynamic: true
@@ -93,7 +92,7 @@ module.exports = {
                 }
             )
             .setFooter({
-                text: "A R C A N A Moderasyon Sistemi"
+                text: "A R C A N A Mute Sistemi"
             })
             .setTimestamp();
 

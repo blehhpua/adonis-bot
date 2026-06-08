@@ -10,7 +10,7 @@ const ticketsPath =
     path.join(__dirname, "..", "data", "tickets.json");
 
 module.exports = {
-    name: "rename",
+    name: "ticket-rename",
 
     async execute(message, args) {
 
@@ -53,7 +53,7 @@ module.exports = {
 
         if (!newName) {
             return message.reply(
-                "❌ Yeni bir isim belirtmelisin.\nÖrnek: `a.rename ödeme-sorunu`"
+                "❌ Yeni bir isim belirtmelisin.\nÖrnek: `a.ticket-rename yeni-isim`"
             );
         }
 
@@ -64,9 +64,9 @@ module.exports = {
 
         // embed
         const embed = new EmbedBuilder()
-            .setColor("#2b1d0e")
+            .setColor("#360258")
             .setDescription(
-                `☾ Ticket ismi \`ticket-${newName}\` olarak değiştirildi.`
+                `Ticket ismi \`ticket-${newName}\` olarak değiştirildi.`
             );
 
         return message.channel.send({

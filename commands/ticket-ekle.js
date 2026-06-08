@@ -10,7 +10,7 @@ const ticketsPath =
     path.join(__dirname, "..", "data", "tickets.json");
 
 module.exports = {
-    name: "ekle",
+    name: "ticket-ekle",
 
     async execute(message, args) {
 
@@ -62,7 +62,7 @@ module.exports = {
         );
 
         const embed = new EmbedBuilder()
-            .setColor("#2b1d0e")
+            .setColor("#360258")
             .setDescription(`☾ ${user} bu ticketa eklendi.`);
 
         return message.channel.send({

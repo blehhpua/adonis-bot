@@ -36,7 +36,7 @@ module.exports = {
             );
 
             await message.reply(
-                "🌙 AFK modundan çıktın."
+                "AFK modundan çıktın."
             );
         }
 
@@ -44,7 +44,7 @@ module.exports = {
         message.mentions.users.forEach(user => {
             if (afkData[user.id]) {
                 message.reply(
-                    `🌙 ${user.tag} şu anda AFK.\nSebep: **${afkData[user.id].reason}**`
+                    `${user.tag} şu anda AFK.\nSebep: **${afkData[user.id].reason}**`
                 );
             }
         });

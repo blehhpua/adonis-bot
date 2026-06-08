@@ -9,7 +9,7 @@ const path = require("path");
 const warningsPath = path.join(__dirname, "../data/warnings.json");
 
 module.exports = {
-    name: "warncheck",
+    name: "warns",
 
     async execute(message) {
         if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
@@ -19,7 +19,7 @@ module.exports = {
         const member = message.mentions.members.first();
 
         if (!member) {
-            return message.reply("❌ Kullanım: `a.warncheck @üye`");
+            return message.reply("❌ Kullanım: `a.warns @üye`");
         }
 
         let warnings = {};
@@ -39,8 +39,7 @@ module.exports = {
             .join("\n");
 
         const embed = new EmbedBuilder()
-            .setColor("#2b1d0e")
-            .setTitle("✦ A R C A N A Warn Kontrol ✦")
+            .setColor("#360258")
             .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
             .addFields(
                 {
@@ -59,7 +58,7 @@ module.exports = {
                 }
             )
             .setFooter({
-                text: "A R C A N A Moderasyon Sistemi"
+                text: "A R C A N A Warn Sistemi"
             })
             .setTimestamp();
 

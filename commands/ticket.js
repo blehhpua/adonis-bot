@@ -24,9 +24,6 @@ module.exports = {
             .setDescription(
                 "Destek almak için aşağıdaki butona basarak bir ticket oluşturabilirsin."
             )
-            .setFooter({
-                text: "A R C A N A Ticket Sistemi"
-            });
 
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()

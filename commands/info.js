@@ -3,7 +3,7 @@ const {
 } = require("discord.js");
 
 module.exports = {
-    name: "userinfo",
+    name: "info",
 
     async execute(message, args) {
 
@@ -18,8 +18,7 @@ module.exports = {
                 .join(", ");
 
         const embed = new EmbedBuilder()
-            .setColor("#2b1d0e")
-            .setTitle("✦ A R C A N A User Info ✦")
+            .setColor("#360258")
             .setThumbnail(
                 member.user.displayAvatarURL({
                     dynamic: true,
@@ -62,9 +61,6 @@ module.exports = {
                             : "Rol yok."
                 }
             )
-            .setFooter({
-                text: "A R C A N A Moderasyon Sistemi"
-            })
             .setTimestamp();
 
         message.channel.send({

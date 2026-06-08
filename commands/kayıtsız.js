@@ -13,7 +13,7 @@ const ROLES = {
 const LOG_CHANNEL_ID = "1508888206710538261";
 
 module.exports = {
-    name: "kayıtsız",
+    name: "ka",
 
     async execute(message, args) {
 
@@ -32,7 +32,7 @@ module.exports = {
 
         if (!member) {
             return message.reply(
-                "❌ Kullanım: `a.kayıtsız @üye`"
+                "❌ Kullanım: `a.ka @üye`"
             );
         }
 

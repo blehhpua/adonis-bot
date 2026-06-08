@@ -28,13 +28,13 @@ module.exports = {
         await message.delete().catch(() => {});
 
         const embed = new EmbedBuilder()
-            .setColor("#2b1d0e")
+            .setColor("#360258")
             .setTitle("🔒 Kanal Kilitlendi")
             .setDescription(
                 "Bu kanal yetkililer tarafından kilitlendi."
             )
             .setFooter({
-                text: "A R C A N A Moderasyon Sistemi"
+                text: "A R C A N A Lock Sistemi"
             })
             .setTimestamp();
 

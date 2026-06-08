@@ -10,7 +10,7 @@ const ticketsPath =
     path.join(__dirname, "..", "data", "tickets.json");
 
 module.exports = {
-    name: "claim",
+    name: "ticket-claim",
 
     async execute(message) {
 
@@ -73,9 +73,9 @@ module.exports = {
 
         // embed
         const embed = new EmbedBuilder()
-            .setColor("#2b1d0e")
+            .setColor("#360258")
             .setDescription(
-                `☾ Ticket ${message.author} tarafından devralındı.`
+                `Ticket ${message.author} tarafından devralındı.`
             );
 
         await message.channel.send({
